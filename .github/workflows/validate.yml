@@ -37,13 +37,24 @@ jobs:
             echo "package-lock.json is already tracked; no publication needed."
             exit 0
           fi
-          lock_b64="$(base64 -w0 package-lock.json)"
-          jq -n \
-            --arg message "Phase B: freeze npm dependency lockfile" \
-            --arg content "$lock_b64" \
-            --arg branch "$GITHUB_HEAD_REF" \
-            '{message:$message,content:$content,branch:$branch}' \
+          python - "$GITHUB_HEAD_REF" <<'PY' \
             | gh api --method PUT "repos/$GITHUB_REPOSITORY/contents/package-lock.json" --input - >/dev/null
+          import base64
+          import json
+          import pathlib
+          import sys
+
+          branch = sys.argv[1]
+          content = base64.b64encode(pathlib.Path("package-lock.json").read_bytes()).decode("ascii")
+          json.dump(
+              {
+                  "message": "Phase B: freeze npm dependency lockfile",
+                  "content": content,
+                  "branch": branch,
+              },
+              sys.stdout,
+          )
+          PY
           echo "Published generated package-lock.json to the proof branch."
 
       - name: Show formatter diff when the candidate is not clean
