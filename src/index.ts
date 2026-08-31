@@ -203,7 +203,12 @@ app.get("/openapi.json", (c) =>
       "/api/accounts": {
         get: {
           parameters: [
-            { name: "id", in: "query", required: true, schema: { type: "string" } },
+            {
+              name: "id",
+              in: "query",
+              required: true,
+              schema: { type: "string" },
+            },
           ],
           responses: { "200": { description: "Synthetic account rows" } },
         },
@@ -222,7 +227,12 @@ app.get("/openapi.json", (c) =>
       "/api/orders": {
         get: {
           parameters: [
-            { name: "id", in: "query", required: true, schema: { type: "string" } },
+            {
+              name: "id",
+              in: "query",
+              required: true,
+              schema: { type: "string" },
+            },
           ],
           responses: { "200": { description: "Synthetic order rows" } },
         },
@@ -446,7 +456,8 @@ app.get("/private/reports", (c) => {
 });
 
 app.get("/api/account", (c) => {
-  if (!hasProofSession(c.req.raw)) return c.json({ error: "not authorized" }, 401);
+  if (!hasProofSession(c.req.raw))
+    return c.json({ error: "not authorized" }, 401);
   return c.json({ id: "SYNTHETIC-001", plan: "proof-only" });
 });
 
