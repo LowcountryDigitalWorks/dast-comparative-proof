@@ -28,7 +28,7 @@ class FakeStatement {
     return this;
   }
 
-  async all<T>(): Promise<{ results: T[] }> {
+  all<T>(): Promise<{ results: T[] }> {
     const lower = this.query.toLowerCase();
     if (
       /\b(?:insert|update|delete|drop|alter|create|replace|truncate|attach|detach|vacuum|pragma)\b/i.test(
@@ -39,17 +39,21 @@ class FakeStatement {
     }
     if (lower.includes("from accounts")) {
       if (/\bor\s+1\s*=\s*1\b/i.test(this.query)) {
-        return { results: this.accounts as T[] };
+        return Promise.resolve({ results: this.accounts as T[] });
       }
       const match = /where\s+id\s*=\s*(\d+)/i.exec(this.query);
       const id = Number(match?.[1] ?? 0);
-      return { results: this.accounts.filter((row) => row.id === id) as T[] };
+      return Promise.resolve({
+        results: this.accounts.filter((row) => row.id === id) as T[],
+      });
     }
     if (lower.includes("from orders")) {
       const id = Number(this.values[0] ?? 0);
-      return { results: this.orders.filter((row) => row.id === id) as T[] };
+      return Promise.resolve({
+        results: this.orders.filter((row) => row.id === id) as T[],
+      });
     }
-    return { results: [] };
+    return Promise.resolve({ results: [] });
   }
 }
 
@@ -71,17 +75,16 @@ class FakeD1 {
 }
 
 const assetFetcher = {
-  async fetch(request: Request): Promise<Response> {
+  fetch(request: Request): Promise<Response> {
     const pathname = new URL(request.url).pathname;
     if (pathname === "/") {
-      return new Response(
-        "<!doctype html><title>Harbor Service Console</title>",
-        {
+      return Promise.resolve(
+        new Response("<!doctype html><title>Harbor Service Console</title>", {
           headers: { "Content-Type": "text/html" },
-        },
+        }),
       );
     }
-    return new Response("missing", { status: 404 });
+    return Promise.resolve(new Response("missing", { status: 404 }));
   },
 };
 
