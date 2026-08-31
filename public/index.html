@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Harbor Service Console</title>
+    <link rel="stylesheet" href="/assets/site.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Harbor Service Console</h1>
+      <p>Public synthetic service surface for runtime validation.</p>
+      <nav>
+        <a href="/search?q=harbor">Search</a>
+        <a href="/catalog?q=harbor">Catalog</a>
+        <a href="/embed">Embed</a>
+        <a href="/widget">Widget</a>
+        <a href="/openapi.json">API description</a>
+        <a href="/service.wsdl">Service description</a>
+        <a href="/form">Contact</a>
+      </nav>
+      <p>Runtime status: <strong data-runtime-status>loading</strong></p>
+      <p>Session telemetry: <code data-proof-token>loading</code></p>
+    </main>
+    <script src="/assets/jquery-3.4.1.min.js"></script>
+    <script src="/assets/app.js"></script>
+  </body>
+</html>
