@@ -3,3 +3,5 @@ dist
 public/assets/jquery-3.4.1.min.js
 public/assets/app.js
 public/assets/app.js.map
+docs/ONE_SHOT_PROOF_DESIGN.md
+docs/RESULT_TEMPLATE.md
