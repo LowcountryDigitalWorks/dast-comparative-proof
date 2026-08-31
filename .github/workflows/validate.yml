@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   validate:
@@ -26,13 +26,25 @@ jobs:
       - name: Install exact direct dependencies
         run: npm install --no-fund --no-audit
 
-      - name: Export generated lockfile for candidate freeze
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: phase-b-package-lock-${{ github.event.pull_request.head.sha || github.sha }}
-          path: package-lock.json
-          if-no-files-found: error
-          retention-days: 1
+      - name: Publish generated lockfile once
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'phase-b/one-shot-benchmark' && github.event.pull_request.head.repo.full_name == github.repository }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if git ls-files --error-unmatch package-lock.json >/dev/null 2>&1; then
+            echo "package-lock.json is already tracked; no publication needed."
+            exit 0
+          fi
+          lock_b64="$(base64 -w0 package-lock.json)"
+          jq -n \
+            --arg message "Phase B: freeze npm dependency lockfile" \
+            --arg content "$lock_b64" \
+            --arg branch "$GITHUB_HEAD_REF" \
+            '{message:$message,content:$content,branch:$branch}' \
+            | gh api --method PUT "repos/$GITHUB_REPOSITORY/contents/package-lock.json" --input - >/dev/null
+          echo "Published generated package-lock.json to the proof branch."
 
       - name: Show formatter diff when the candidate is not clean
         shell: bash
