@@ -26,5 +26,16 @@ jobs:
       - name: Install exact direct dependencies
         run: npm install --no-fund --no-audit
 
+      - name: Show formatter diff when the candidate is not clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run format
+          if ! git diff --quiet; then
+            echo "Formatter changed tracked files; commit the exact formatting below." >&2
+            git diff --no-ext-diff
+            exit 1
+          fi
+
       - name: Validate proof implementation
         run: npm run validate
