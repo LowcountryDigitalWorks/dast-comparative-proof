@@ -387,7 +387,8 @@ app.get("/api/export", (c) =>
 
 app.post("/form", async (c) => {
   const body = await c.req.formData();
-  const note = String(body.get("note") ?? "");
+  const noteValue = body.get("note");
+  const note = typeof noteValue === "string" ? noteValue : "";
   return c.html(htmlPage("Form Result", `<h1>Submitted</h1><p>${note}</p>`));
 });
 
