@@ -74,9 +74,12 @@ const assetFetcher = {
   async fetch(request: Request): Promise<Response> {
     const pathname = new URL(request.url).pathname;
     if (pathname === "/") {
-      return new Response("<!doctype html><title>Harbor Service Console</title>", {
-        headers: { "Content-Type": "text/html" },
-      });
+      return new Response(
+        "<!doctype html><title>Harbor Service Console</title>",
+        {
+          headers: { "Content-Type": "text/html" },
+        },
+      );
     }
     return new Response("missing", { status: 404 });
   },
@@ -108,9 +111,15 @@ describe("one-shot DAST benchmark", () => {
 
   it("D02 allows read-only predicate injection while destructive SQL is rejected", async () => {
     const db = new FakeD1();
-    const injected = await app.request("/api/accounts?id=1%20OR%201=1", {}, env(db));
+    const injected = await app.request(
+      "/api/accounts?id=1%20OR%201=1",
+      {},
+      env(db),
+    );
     expect(injected.status).toBe(200);
-    expect(((await injected.json()) as { rows: unknown[] }).rows).toHaveLength(2);
+    expect(((await injected.json()) as { rows: unknown[] }).rows).toHaveLength(
+      2,
+    );
     expect(db.prepared.at(-1)?.toLowerCase()).toContain("select");
 
     const destructive = await app.request(
@@ -124,9 +133,15 @@ describe("one-shot DAST benchmark", () => {
 
   it("S02 uses a bound D1 query", async () => {
     const db = new FakeD1();
-    const response = await app.request("/api/orders?id=1%20OR%201=1", {}, env(db));
+    const response = await app.request(
+      "/api/orders?id=1%20OR%201=1",
+      {},
+      env(db),
+    );
     expect(response.status).toBe(200);
-    expect(((await response.json()) as { rows: unknown[] }).rows).toHaveLength(0);
+    expect(((await response.json()) as { rows: unknown[] }).rows).toHaveLength(
+      0,
+    );
     expect(db.prepared.at(-1)).toContain("WHERE id = ?");
   });
 
@@ -137,8 +152,12 @@ describe("one-shot DAST benchmark", () => {
       { headers: { Origin: attacker } },
       env(),
     );
-    expect(vulnerable.headers.get("access-control-allow-origin")).toBe(attacker);
-    expect(vulnerable.headers.get("access-control-allow-credentials")).toBe("true");
+    expect(vulnerable.headers.get("access-control-allow-origin")).toBe(
+      attacker,
+    );
+    expect(vulnerable.headers.get("access-control-allow-credentials")).toBe(
+      "true",
+    );
 
     const safe = await app.request(
       "/api/status",
@@ -149,18 +168,30 @@ describe("one-shot DAST benchmark", () => {
   });
 
   it("D04 accepts no-op unsafe methods while S04 rejects them", async () => {
-    const vulnerable = await app.request("/api/config", { method: "DELETE" }, env());
+    const vulnerable = await app.request(
+      "/api/config",
+      { method: "DELETE" },
+      env(),
+    );
     expect(vulnerable.status).toBe(200);
-    expect((await vulnerable.json()) as object).toMatchObject({ changed: false });
+    expect((await vulnerable.json()) as object).toMatchObject({
+      changed: false,
+    });
 
-    const safe = await app.request("/api/preferences", { method: "DELETE" }, env());
+    const safe = await app.request(
+      "/api/preferences",
+      { method: "DELETE" },
+      env(),
+    );
     expect(safe.status).toBe(405);
     expect(safe.headers.get("allow")).toBe("GET");
   });
 
   it("D05 and S05 expose structurally distinct postMessage handlers", async () => {
     const vulnerable = await app.request("/embed", {}, env());
-    expect(await vulnerable.text()).toContain(".innerHTML = String(event.data)");
+    expect(await vulnerable.text()).toContain(
+      ".innerHTML = String(event.data)",
+    );
 
     const safe = await app.request("/widget", {}, env());
     const safeBody = await safe.text();
@@ -174,7 +205,9 @@ describe("one-shot DAST benchmark", () => {
       "synthetic-proof",
     );
 
-    const openapi = (await (await app.request("/openapi.json", {}, env())).json()) as {
+    const openapi = (await (
+      await app.request("/openapi.json", {}, env())
+    ).json()) as {
       paths: Record<string, unknown>;
     };
     expect(openapi.paths["/api/accounts"]).toBeDefined();
@@ -183,13 +216,17 @@ describe("one-shot DAST benchmark", () => {
     const runtime = await app.request("/api/runtime?debug=1", {}, env());
     expect((await runtime.json()) as object).toMatchObject({ debug: true });
 
-    const jwt = (await (await app.request("/api/session-info", {}, env())).json()) as {
+    const jwt = (await (
+      await app.request("/api/session-info", {}, env())
+    ).json()) as {
       token: string;
     };
     expect(jwt.token.split(".")).toHaveLength(3);
 
     const exported = await app.request("/api/export", {}, env());
-    expect((await exported.json()) as object).toMatchObject({ accountNumber: "TEST-0001" });
+    expect((await exported.json()) as object).toMatchObject({
+      accountNumber: "TEST-0001",
+    });
   });
 
   it("D13 allows GraphQL introspection while S07 blocks it", async () => {
@@ -258,7 +295,11 @@ describe("one-shot DAST benchmark", () => {
   it("O05 accepts FormData and reflects proof-only form input", async () => {
     const form = new FormData();
     form.set("note", "<svg onload=alert(1)>");
-    const response = await app.request("/form", { method: "POST", body: form }, env());
+    const response = await app.request(
+      "/form",
+      { method: "POST", body: form },
+      env(),
+    );
     expect(await response.text()).toContain("<svg onload=alert(1)>");
   });
 });
