@@ -189,12 +189,12 @@ Those are useful actions, but the report should distinguish:
 
 For pentesting and active checks, a compact table would be extremely useful:
 
-| Tool/check | Target | Parameter/input | Result | Evidence |
-| --- | --- | --- | --- | --- |
-| dalfox | `/search` | `q` | CONFIRMED | DOM marker |
-| sqlmap | `/api/accounts` | `id` | INCONCLUSIVE | reason... |
-| ffuf | `/api/runtime` | parameter discovery | NOT REACHED / NONE | reason... |
-| jwt_tool | observed token source | token | NOTHING TO TEST | discovery reason... |
+| Tool/check | Target                | Parameter/input     | Result             | Evidence            |
+| ---------- | --------------------- | ------------------- | ------------------ | ------------------- |
+| dalfox     | `/search`             | `q`                 | CONFIRMED          | DOM marker          |
+| sqlmap     | `/api/accounts`       | `id`                | INCONCLUSIVE       | reason...           |
+| ffuf       | `/api/runtime`        | parameter discovery | NOT REACHED / NONE | reason...           |
+| jwt_tool   | observed token source | token               | NOTHING TO TEST    | discovery reason... |
 
 This would drastically reduce manual report reconciliation.
 
