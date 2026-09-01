@@ -1,0 +1,48 @@
+{
+  "name": "@lowcountrydigitalworks/dast-comparative-proof",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Synthetic-only one-shot DAST benchmark for LDW runtime security tooling evaluation.",
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0 <25.0.0",
+    "npm": ">=11.0.0 <13.0.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "workerd@1.20260828.1": true
+  },
+  "overrides": {
+    "workerd": "1.20260828.1"
+  },
+  "scripts": {
+    "build:web": "node scripts/build-web.mjs",
+    "build:worker": "wrangler deploy --dry-run --outdir dist/worker",
+    "build": "npm run build:web && npm run build:worker",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "seed:hash": "node scripts/seed-hash.mjs",
+    "surface:check": "node scripts/check-surface.mjs",
+    "validate": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build && npm run seed:hash && npm run surface:check"
+  },
+  "dependencies": {
+    "graphql": "16.14.2",
+    "hono": "4.13.1",
+    "jquery": "3.4.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.13.3",
+    "esbuild": "0.28.1",
+    "eslint": "10.8.0",
+    "globals": "17.7.0",
+    "prettier": "3.9.6",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.65.0",
+    "vitest": "4.1.10",
+    "wrangler": "4.127.1"
+  }
+}
