@@ -4,26 +4,38 @@ Public synthetic benchmark workspace for Lowcountry Digital Works (LDW) dynamic 
 
 ## Current status
 
-**PHASE B IMPLEMENTATION AUTHORIZED / IMPLEMENTATION CANDIDATE IN REVIEW / NOT YET DEPLOYED OR PROVIDED TO DECLOAK**
+**PHASE B EXECUTED / TECHNICAL DISPOSITION: MIXED / RUNTIME CLEANUP VERIFICATION PENDING**
 
-This repository is not a production application, customer system, security product, or adopted LDW scanner integration. It exists only to hold reproducible synthetic proof material.
+The bounded Decloak Enterprise Phase B proof was executed against one isolated disposable synthetic target. The accepted technical disposition is:
 
-Portfolio authorized the bounded Phase B implementation and one-shot execution in:
+**MIXED — VALUE EXISTS BUT MATERIAL LIMITS/NOISE REMAIN.**
+
+Decloak demonstrated distinct black-box/runtime value, including confirmed reflected XSS and useful active/API discovery, but material seeded conditions remained missed or inconclusive. The detailed evidence and final reconciliation live in [`docs/DECLOAK_PHASE_B_RESULT_ASSESSMENT.md`](docs/DECLOAK_PHASE_B_RESULT_ASSESSMENT.md). Sanitized vendor-facing feedback lives in [`docs/DECLOAK_VENDOR_FEEDBACK.md`](docs/DECLOAK_VENDOR_FEEDBACK.md).
+
+The proof used only synthetic data and disposable proof infrastructure. No customer or production target, PHI, CUI, customer data, real credential/session, private source submission, production DNS, or production/shared application resource was part of the proof.
+
+## One-shot integrity
+
+The proof remained intentionally one-shot: one disposable target and one vendor-operated Enterprise scan sequence with full investigation, Active Testing, API testing, AI Pentesting, and synthetic authenticated scanning enabled.
+
+The benchmark was not tuned, modified, or rerun merely because seeded conditions were missed. The frozen design and expected-condition matrix remain in [`docs/ONE_SHOT_PROOF_DESIGN.md`](docs/ONE_SHOT_PROOF_DESIGN.md).
+
+## Runtime cleanup
+
+Repository evidence confirms the proof result and one-shot integrity, but this repository does **not yet contain independently verified decommission evidence** for the disposable Worker and D1 runtime. Runtime cleanup therefore remains a closeout item and must not be represented as complete until authoritative deletion/hostname evidence is recorded.
+
+No redeployment or rerun is required for this documentation closeout.
+
+## Entitlement and use boundary
+
+LDW's canonical Tool Register records Decloak AppSumo Tier 3 as activated/active. Ownership of that entitlement does **not** convert the technical result to PASS, authorize unrestricted customer/production scanning, make Decloak a sole source of truth, or replace existing LDW controls and human review.
+
+This repository is a synthetic proof workspace, not a production application, customer system, security product, or permanent Decloak CI/release integration.
+
+## Authority
+
+Portfolio authorized the bounded one-shot Phase B proof in:
 
 `LowcountryDigitalWorks/business-operations/docs/governance/decisions/2026-08-31-decloak-dast-phase-b-design-authorization.md`
 
-The accepted proof-design baseline is main `904ad1a29306337a16fb076926a9d912ab348af5`.
-
-## One-shot proof rule
-
-The first technical proof remains intentionally one-shot: one isolated disposable target and one vendor-operated Enterprise scan sequence with full investigation + Active Testing + AI Pentesting enabled. Authenticated mode may be included only if it can be attached to that same scan with a synthetic session; otherwise it is marked NOT TESTED rather than requesting another proof scan.
-
-See [`docs/ONE_SHOT_PROOF_DESIGN.md`](docs/ONE_SHOT_PROOF_DESIGN.md) for the frozen matrix, [`docs/IMPLEMENTATION_NOTES.md`](docs/IMPLEMENTATION_NOTES.md) for the current implementation choices, and [`docs/RESULT_TEMPLATE.md`](docs/RESULT_TEMPLATE.md) for evidence capture.
-
-## Implementation boundary
-
-The authorized candidate uses only one TypeScript/Hono Cloudflare Worker, one Worker static-assets binding, and one dedicated disposable D1 database containing synthetic rows. The committed Wrangler configuration intentionally contains a placeholder D1 identifier until the dedicated proof database is created during the authorized deployment step.
-
-No custom domain, production DNS, production/shared Worker or D1 resource, customer data, PHI/CUI, real credentials/sessions, private source submission, GitHub App, Decloak token, webhook, or permanent Decloak CI/release dependency is permitted.
-
-No target URL may be provided to Decloak until the implementation PR, local/CI validation, D1 read-only proof, deployment freeze, and deployed-target self-validation all pass.
+The implementation merge was `60f872317232b558349785b4dd041b1308133b12`; the accepted deep evidence reconciliation was merged after the proof without changing benchmark behavior.
