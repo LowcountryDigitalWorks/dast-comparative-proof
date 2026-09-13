@@ -1,229 +1,199 @@
 # Vendor Feedback — Decloak Enterprise One-Shot Synthetic Proof
 
-This document is intentionally sanitized for sharing with Decloak. It contains no report-access token, customer data, production secret, or private source.
+This document is sanitized for sharing with Decloak. It contains no report-access token, customer data, production secret, or private source.
 
-## Context
+**AI-assistance and accuracy disclaimer:** AI substantially assisted evidence extraction, comparison, reconciliation, and drafting. LDW reviewed the conclusions against the frozen benchmark, live read-only checks, and the customer-visible report, but route-specific interpretations may be corrected by Decloak's internal telemetry. This feedback is not a certification.
 
-Lowcountry Digital Works built a frozen synthetic benchmark before Decloak received the target URL. The target was intentionally disposable and contained only fake data. We asked for one Enterprise scan with full investigation, Active Testing, API testing, AI Pentesting, and authenticated scanning using a synthetic session-start route.
+## Context and disposition
 
-The benchmark was not changed or rerun merely because Decloak missed a condition.
+Lowcountry Digital Works built and independently validated a frozen synthetic benchmark before Decloak received the target URL. The disposable target contained only fake data. Stephen Gray operated one Enterprise scan with full investigation, Active Testing, API Testing, AI Pentesting, and authenticated scanning through a synthetic session-start path.
 
-The purpose was not to see how many findings Decloak could generate. It was to answer a narrower question:
+The benchmark was not changed, tuned, or rerun after handoff. Our question was whether Decloak adds material runtime/AppSec evidence beyond our dependency, secret, CI, browser, deterministic-test, site-quality, and framework-aware source controls.
 
-> Does Decloak provide material runtime/AppSec evidence that complements our existing dependency, secret, CI, browser, deterministic-test, website-quality, and static-analysis controls?
+Our evidence-driven result remains:
 
-Our technical result is **MIXED — real distinct value demonstrated, with material detection and report-quality gaps remaining**.
+**MIXED — real distinct value demonstrated, with material detection, orchestration, and report-quality limits.**
+
+LDW subsequently purchased Decloak AppSumo Tier 3 because the proof demonstrated enough distinct runtime value at the accepted one-time cost to justify continued use as a complementary sensor. The purchase does not convert MIXED to PASS, endorse every score/severity/narrative, replace existing controls, or make Decloak an unattended authority.
 
 ## What worked especially well
 
-### 1. Confirmed reflected XSS
+### Confirmed reflected XSS
 
-The strongest result was the reflected-XSS test. Decloak first identified reflection and then dalfox confirmed executable DOM behavior for the seeded query parameter. This is exactly the kind of evidence we wanted from an active/pentest product: a confirmed runtime exploit rather than a heuristic warning.
+Decloak discovered reflection on `/search?q=`, then dalfox confirmed executable DOM behavior with a parameter-specific marker. This is exactly the distinct value we wanted: runtime exploit confirmation rather than another passive or heuristic warning.
 
-This is materially more useful to us than another static or passive finding.
+### JavaScript-derived API discovery
 
-### 2. CORS behavior
+Our first review incorrectly marked this missed. The deeper review found explicit report evidence that Decloak derived both `/api/runtime` and `/api/session-info` from page JavaScript and confirmed HTTP 200. The request inventory also shows the browser fetches, and the endpoints were promoted into sqlmap/dalfox/ffuf target lists.
 
-Decloak correctly identified the endpoint reflecting arbitrary Origin while allowing credentials. That demonstrates useful active API-behavior testing.
+That is valuable for modern static/serverless applications and should be made more prominent. The API card currently says “Undocumented API endpoint discovery (JS analysis) — Clean,” while its inventory immediately shows two endpoints found in page JS. We now interpret “Clean” as “no issue flagged,” not “nothing discovered,” but the wording obscures a real success.
 
-One improvement would be to distinguish **configuration defect** from **proven authenticated-victim exploitability**. In our synthetic target the proof session cookie was `SameSite=Lax`, and the vulnerable profile endpoint itself did not require authentication. The configuration finding is valid; the report narrative that any arbitrary site can necessarily act as the logged-in victim is stronger than this specific proof established.
+### Active CORS verification
 
-### 3. Forced browsing
+Decloak sent an explicit hostile Origin to `/api/profile` and displayed the reflected ACAO plus `Access-Control-Allow-Credentials: true`. This proves the configuration defect.
 
-Decloak found an unlinked administrative-style route and recorded the successful HTTP response. This is useful distinct attack-surface discovery.
+Please separate that from the stronger consequence narrative. The endpoint itself was unauthenticated, and the proof session cookie used `SameSite=Lax`, so the claim that any site can necessarily act as a logged-in victim was not demonstrated by this target.
 
-### 4. OpenAPI and GraphQL discovery
+### Forced browsing and API surface discovery
 
-Decloak detected the OpenAPI surface and GraphQL introspection. These are valuable capabilities for agency/client web and API assessment work.
+Decloak found the unlinked `/admin` route, recorded HTTP 200, discovered the OpenAPI operations, and proved GraphQL introspection with Query and Mutation types. The agent log and request inventory also prove that `/service.wsdl`, the browser script, and the source map were fetched.
 
-### 5. postMessage analysis
+### postMessage safe/unsafe distinction
 
-Decloak correctly recognized the unsafe `postMessage` handler that writes attacker-controlled message data into `innerHTML` without origin validation. We also provided a safe sibling using origin validation plus `textContent`; we did not see that safe sibling escalated into a comparable exploit finding.
+The report identified `/embed` as lacking origin validation and passing message data into `innerHTML`. It also noticed the safe `/widget` sibling's nearby `event.origin` check and kept that observation Low rather than treating it as an active risk. That is useful discrimination, though the unsafe case remained a static/behavior signal rather than an executed exploit.
 
-### 6. Source-map and browser-library analysis
+### Authenticated workflow operation
 
-Decloak found and fetched the exposed JavaScript source map and correctly detected the intentionally pinned jQuery 3.4.1 CVEs. These overlap some existing LDW controls, but the agent reasoning showing why it fetched and inspected those assets is useful.
+Authenticated mode ran without LDW sharing a real credential or installing Decloak's browser extension. That workflow is useful. Customer-visible route-level evidence needs improvement, discussed below.
 
-### 7. Authenticated-scan workflow
+## High-value misses and orchestration gaps
 
-Authenticated scanning successfully ran through the synthetic session-start path in the same proof. That was operationally useful because no LDW production credential or browser-session token had to be shared, and no second scan was needed.
+### Hono -> D1 SQL injection remained inconclusive
 
-## High-value misses / improvement opportunities
+The known route `/api/accounts?id=` builds a real read-only D1 query using direct interpolation. `id=1 OR 1=1` returned all four synthetic rows during final independent validation. A destructive-input guard rejects semicolons and DDL/DML keywords, and there is no write endpoint. The safe `/api/orders?id=` sibling uses `prepare(...).bind(...)`.
 
-These are the areas that would most improve Decloak's distinct technical value for our workloads.
+Decloak discovered `/api/accounts` through OpenAPI and included the route in sqlmap's 13-target list, but the report does not disclose:
 
-### 1. Known exploitable Hono -> D1 SQL injection remained inconclusive
+- HTTP method;
+- selected parameter;
+- preserved baseline query;
+- payload;
+- response status/body differential;
+- sqlmap output or exit classification;
+- timeout/retry behavior;
+- WAF or TLS evidence.
 
-We intentionally created a real but read-only SQL-injection condition in a Hono/Cloudflare D1 route. It performs only a `SELECT`, contains synthetic rows, rejects destructive SQL, and was independently verified before the scan to expand results with an `OR 1=1`-style predicate.
+The displayed explanation says either connection/TLS failed or a WAF/security plugin probably blocked/error-paged requests and that application logic was not exercised. Those are possibilities, not target-specific evidence. The target was reachable and the parameter remained exploitable.
 
-Decloak attempted SQL-injection testing but reported it as inconclusive rather than confirming the known condition.
+This is our most important technical miss. Content-difference/boolean confirmation for SQLite/D1-like edge workloads and auditable candidate-specific evidence would materially improve the product.
 
-This is the most important miss in our benchmark because framework-aware Hono/D1 security is one of the gaps we are specifically trying to cover with runtime testing.
+### Hidden `debug` parameter missed after ffuf became inconclusive
 
-Improvement ideas:
+Decloak correctly discovered `/api/runtime`, then selected it for ffuf. The report says this one target was inconclusive because of a connection failure or malformed output; 12 other targets completed with nothing found. The actual `debug` parameter materially changes the JSON response and remained live/reproducible.
 
-- improve boolean-based blind/content-difference confirmation for SQLite/D1-like behavior;
-- retain candidate-specific baseline/differential responses across sqlmap attempts;
-- identify serverless/edge SQL backends where timing-based techniques may be unreliable but content-based proof is strong;
-- expose why sqlmap concluded inconclusive (parameter selection, response stability, WAF/edge effects, DBMS fingerprint, payload rejection, etc.).
+Please expose the raw failure class, request baseline, parameter candidates, and response differential. Without those, we cannot tell scanner orchestration failure from target behavior.
 
-### 2. Browser-JavaScript-derived API discovery missed an explicit fetch target
+### Observable weak JWT did not reach `jwt_tool`
 
-The browser bundle contained a direct same-origin call to:
+Decloak discovered `/api/session-info` from page JavaScript, the request inventory shows the fetch, and the page's browser code renders the response token into the DOM. The response contained a valid three-part HS256 proof JWT, independently verified as signed with the deliberately weak key `secret` and carrying only synthetic proof claims.
 
-`/api/runtime?mode=summary`
+`jwt_tool` nevertheless says no JWT-shaped token was found on pages or cookies.
 
-That endpoint was intentionally omitted from OpenAPI so we could test whether Decloak would derive API attack surface from JavaScript/source-map analysis.
+Please ingest JWT candidates from JSON responses, dynamically rendered DOM, browser storage, cookies, and Authorization headers, and distinguish:
 
-The agent fetched both the browser script and source map, but the report did not show discovery of this endpoint. Instead the agent tried generic status/API paths.
+- no token discovered;
+- token discovered but excluded, with reason;
+- token tested, no weak key found;
+- token tested and confirmed weak.
 
-This suggests a high-value improvement area:
+### HTTP-method security condition missed despite OpenAPI inventory
 
-- parse first-party `fetch`, XHR, axios-like, WebSocket, GraphQL-client, and form-action targets from JavaScript/source maps;
-- promote concrete same-origin URL strings into the API testing queue;
-- show provenance such as "discovered from app.js line/source-map module".
+Decloak inventoried GET, PUT, and DELETE on `/api/config`, but Active Testing reported permitted methods Clean. The route intentionally returned 200 for DELETE/PUT with `accepted: true` and no state change; `/api/preferences` returned 405 with `Allow: GET`.
 
-For modern static/serverless applications, this would be very valuable.
+This is a discovery-versus-validation gap. Compare declared methods, actual 2xx/4xx behavior, neighboring routes, authorization, and state preconditions, then show route-specific method outcomes.
 
-### 3. Hidden parameter fuzzing missed a known `debug` parameter
+### Unauthenticated synthetic export was inventoried but not surfaced
 
-The undocumented runtime endpoint had a real hidden `debug` parameter that materially changed the JSON response. Hidden-parameter fuzzing repeatedly returned nothing found or inconclusive.
+`/api/export` was discovered through OpenAPI and promoted into downstream tool lists. It returned synthetic account ID/name/number/plan/balance without a session. The API check “Unauthenticated access on sensitive-looking API endpoint” reported Clean.
 
-This may partly cascade from the JavaScript-derived endpoint miss. Once a concrete endpoint is discovered, response-differential parameter fuzzing would help here.
+We recognize that names and fake fields alone cannot prove a universal access-control vulnerability. A review candidate, with cautious language and endpoint/field/auth evidence, would still be useful.
 
-### 4. JWT analysis reported `nothing to test` despite an observable proof JWT
+### Form/body-input XSS was not tested by dalfox
 
-The browser bundle also fetched `/api/session-info`, which returned a valid three-part HS256 JWT and rendered it into the page. The token used a deliberately weak/public proof key and had no real authority.
+`/form` was crawled and its form was passed to sqlmap `--forms`, which was inconclusive. The route reflects its `note` body field directly into HTML, but `/form` does not appear in dalfox's target list. Extending the successful reflection-to-dalfox path to form-urlencoded/multipart body fields would improve coverage.
 
-The report's jwt_tool result was `nothing to test`.
+### Authenticated private-route coverage is unproved
 
-Improvement ideas:
+The report shows an authenticated badge and 16 authenticated pages, and Stephen confirmed the synthetic session-start path was used. But customer-visible requests/logs show no `/session/start`, `/private`, or `/private/reports`, and no public-versus-authenticated differential.
 
-- collect JWT-shaped values from JSON responses, DOM text, browser storage, cookies, Authorization headers, and source-map-discovered API responses;
-- record why a token was or was not selected for jwt_tool;
-- separate "no token discovered" from "token discovered but not eligible/testable".
+Session capture may occur outside the visible inventory, but the report should show a sanitized authenticated-coverage record:
 
-### 5. HTTP-method probing missed a deliberately permissive route
+- session establishment succeeded/failed;
+- authenticated-only routes reached;
+- routes newly discovered after authentication;
+- public versus authenticated status differential;
+- session expiry/rejection if relevant.
 
-One OpenAPI-documented route intentionally accepted no-op `PUT` and `DELETE` requests with HTTP 200. A safe sibling returned 405 with a narrow `Allow` header.
+## Tool-by-tool reconciliation
 
-The active-testing summary reported HTTP methods clean, so this condition was missed.
-
-A useful enhancement would compare methods against:
-
-- OpenAPI-declared operations;
-- GET-only neighboring routes;
-- 2xx/4xx behavior by method;
-- unexpected acceptance of methods with no authorization or state precondition.
-
-### 6. Unauthenticated sensitive-looking export was not surfaced
-
-A documented API endpoint returned a synthetic account export without authentication. The data was entirely fake but intentionally looked like account data.
-
-We did not see a distinct finding for unauthenticated sensitive-data exposure/access control.
-
-This is difficult to assess generically without business context, but heuristics combining endpoint names (`export`, `download`, `account`, `profile`, `report`) with structured sensitive-looking fields and absence of auth could produce a useful "review access control" candidate rather than asserting a vulnerability.
-
-### 7. Form/body-input testing did not confirm a known reflected HTML sink
-
-A standard HTML form accepted FormData and reflected the submitted value directly into HTML. The route was crawled, but we did not receive useful reflected-XSS confirmation for that body-input path.
-
-Extending the same reflection -> dalfox confirmation pipeline used successfully for query parameters to form-urlencoded/multipart fields would improve coverage.
-
-## Finding-quality and report-UX feedback
-
-### 1. Distinguish confirmed exploit, configuration defect, heuristic, and informational observation
-
-This distinction exists in parts of the product, but it should be much more prominent across the report.
-
-For an analyst, the first view we want is approximately:
-
-1. **Confirmed exploitable**
-2. **Actively verified misconfiguration/behavior**
-3. **Likely issue requiring manual validation**
-4. **Passive configuration/dependency observation**
-5. **Informational/clean check**
-
-That would make the Enterprise value immediately visible.
-
-### 2. Collapse repetitive page-level findings
-
-Missing CSP/HSTS, server disclosure, source-map exposure, and similar findings repeat many times and inflate the report. A site-wide root finding with affected-page count plus expandable per-page evidence would reduce analyst triage substantially.
-
-### 3. Clarify top-level counters
-
-Our report displayed 141 findings, while the AI summary described 99 issues. The top metric displayed `3 / 43` critical/high while the prose summary described 2 critical and 43 high.
-
-These may represent different grouping semantics, but the UI does not make that distinction obvious. A tooltip/label such as `141 observations -> 99 deduplicated issues` would resolve this if that is the intended meaning.
-
-### 4. Qualify provider-managed DNS/subdomain context
-
-On a `workers.dev` proof hostname, findings such as SPF/DMARC/MX/CAA and `77 subdomains discovered` are not very actionable and can be misleading because the scanned host is inside a provider-managed hierarchy rather than a registrable customer domain.
-
-Consider determining the registrable/eTLD+1 ownership boundary and suppressing or heavily qualifying controls that the target operator cannot reasonably configure.
-
-### 5. Avoid overstating exploitability from a single exposed marker file
-
-The scanner correctly found our synthetic `/.git/HEAD`, which was a good forced-browsing result. However, the report then stated that the entire source repository could be reconstructed.
-
-Our target only exposed a fake HEAD-like response; no `.git/objects`, refs, index, or repository data existed.
-
-A stronger evidence ladder would be:
-
-- HEAD exposed -> sensitive path confirmed;
-- HEAD + refs/config/index exposed -> likely repository exposure;
-- object traversal/reconstruction succeeds -> repository reconstruction confirmed.
-
-That would make critical severity much more defensible.
-
-### 6. Separate application-observed third parties from scanner-initiated checks
-
-One section showed two third-party domains while the network-request summary showed zero third-party requests. The agent log indicates it independently checked common CDN domains.
-
-Those are useful actions, but the report should distinguish:
-
-- third parties actually loaded/contacted by the application; and
-- external domains the scanner independently chose to investigate.
-
-### 7. Make per-test targeting and outcomes easier to inspect
-
-For pentesting and active checks, a compact table would be extremely useful:
-
-| Tool/check | Target                | Parameter/input     | Result             | Evidence            |
-| ---------- | --------------------- | ------------------- | ------------------ | ------------------- |
-| dalfox     | `/search`             | `q`                 | CONFIRMED          | DOM marker          |
-| sqlmap     | `/api/accounts`       | `id`                | INCONCLUSIVE       | reason...           |
-| ffuf       | `/api/runtime`        | parameter discovery | NOT REACHED / NONE | reason...           |
-| jwt_tool   | observed token source | token               | NOTHING TO TEST    | discovery reason... |
-
-This would drastically reduce manual report reconciliation.
-
-## Safe-control discrimination
-
-We deliberately paired several vulnerable routes with safe siblings. This was one of the more positive aspects of the result: we did not see clear high/critical false-positive escalation against the safe HTML-encoding, restricted-CORS, origin-validated postMessage, session-protected, or introspection-blocked siblings.
-
-The strongest explicit discrimination was CORS: the vulnerable profile route was found while the constrained status route was tested clean.
-
-For SQLi and HTTP methods, however, safe/unsafe discrimination cannot be credited strongly because the unsafe canaries themselves were not confirmed.
-
-## What would move our result from MIXED toward PASS
-
-For our use case, the highest-value improvements would be:
-
-1. confirm the read-only Hono/D1 SQLi reliably;
-2. discover concrete same-origin APIs directly from first-party JavaScript/source maps;
-3. feed discovered endpoints into hidden-parameter/JWT/API testing automatically;
-4. extend reflected-XSS confirmation to body/FormData inputs;
-5. improve method/access-control behavior checks;
-6. make exploit evidence and per-tool targeting easier to audit;
-7. reduce repetitive/contextually irrelevant report noise.
-
-The product already demonstrated something several generic static scanners did not for us: useful black-box runtime evidence and actual XSS exploit confirmation. The gap is consistency across the rest of the advertised active/pentest surface.
+| Tool     | What the report shows                                                                                                                    | Assessment / requested improvement                                                                                                                                                |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| dalfox   | 13 targets; one confirmed `/search` `q` XSS with DOM marker; 12 API routes reported no exploitable reflection                            | Strong success. Rename “confirmed against 13 targets” to “tested 13 targets; one confirmed.” Include body/form candidates.                                                        |
+| sqlmap   | 13 route names, including vulnerable `/api/accounts` and safe `/api/orders`, all grouped inconclusive; one form run grouped inconclusive | Expose method, parameter, request, payload class, baseline/differential, status, raw failure category, and exit result. Do not present speculative WAF/TLS causes as if observed. |
+| ffuf     | Twelve routes completed with no differing parameter; `/api/runtime` alone inconclusive due connection failure or malformed output        | Show which failure occurred, raw parse/exit status, baseline, candidate names, and response differences. Hidden `debug` was missed.                                               |
+| jwt_tool | “Nothing to test” because no JWT found on page/cookie                                                                                    | Candidate ingestion failed despite a JS-discovered, fetched, DOM-rendered weak token. Expand sources and explain eligibility decisions.                                           |
+| nuclei   | Info OpenAPI detection after forced-browsing candidate                                                                                   | Valid detection, not an exploit. Do not let “2 confirmed exploits” count imply that OpenAPI discovery is a second exploit.                                                        |
+
+## Safe-control assessment
+
+| Safe control                              | Evidence                                                                                            | Credit                                         |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| encoded `/catalog?q=`                     | Crawled; aggregate reflected-input testing flagged only `/search` twice                             | **TESTED / NO ISSUE** at active layer          |
+| bound `/api/orders?id=`                   | Included in sqlmap targets, but the entire SQLi result was inconclusive                             | **COVERAGE UNCLEAR**; no discrimination credit |
+| restricted-CORS `/api/status`             | Discovered and explicitly requested; aggregate API CORS result found only `/api/profile`            | **TESTED / NO ISSUE**, aggregate evidence      |
+| 405 `/api/preferences`                    | Discovered, but method check was globally Clean while unsafe sibling was missed                     | **COVERAGE UNCLEAR**; no discrimination credit |
+| origin-checked/textContent `/widget`      | Crawled; report explicitly notes origin validation nearby and does not escalate active risk         | **TESTED / NO ISSUE**; useful differentiation  |
+| session-protected `/api/account`          | Discovered and downstream-targeted, but no route-level auth evidence                                | **COVERAGE UNCLEAR / NO HARMFUL FP**           |
+| introspection-blocked `/graphql-internal` | Discovered and downstream-targeted; only vulnerable `/graphql` has displayed introspection evidence | **COVERAGE UNCLEAR / NO HARMFUL FP**           |
+
+## Finding quality, severity, and report UX
+
+### Consequence calibration
+
+- `/.git/HEAD` was genuinely reachable and returned 32 bytes, but no refs, config, index, objects, packs, repository reconstruction, or historical secrets were shown. Treat HEAD exposure, likely repository exposure, and successful reconstruction as separate evidence levels.
+- CORS headers were actively verified; logged-in-victim exploitability was not.
+- `/admin` is an unlinked 200 route, not proof of sensitive content or authorization bypass.
+- public OpenAPI and GraphQL introspection are attack-surface/configuration observations, not exploits by themselves.
+
+### Count and label clarity
+
+- 141 findings versus AI Summary 99 issues is not explained.
+- 3 critical / 43 high versus AI Summary 2 critical / 43 high is plausibly a pre/post-pentest grouping difference, but not labeled.
+- “Configuration & Behaviour Findings (60) in 18 groups,” 46 critical/high, plus 76 informational items does not visibly reconcile to 141.
+- Active CORS Clean versus API CORS Critical likely reflects page versus API scope, but the scope is not shown.
+- the header card says HSTS present while 18 High findings and live responses show HSTS missing.
+- WSDL is crawled, but the specialized SOAP/WSDL discovery check says Clean.
+- “confirmed against 13 targets” means target scope even when every result is inconclusive/negative.
+- Pentest says two confirmed exploits even though the second visible item is informational OpenAPI detection and explicitly does not affect the score.
+- reflected input “affects 2 pages,” but expanded evidence shows `/search` twice, not two distinct routes.
+
+Please label raw observations, deduplicated issues, grouped cards, affected requests, and score-contributing findings separately.
+
+### Duplicate and provider-context noise
+
+- Source-map exposure appears in separate High and Medium groups.
+- CSP and HSTS are repeated across page observations rather than presented as one site-wide root issue with affected routes.
+- SPF, DMARC, MX, CAA, DNSSEC, and 77 wordlist “subdomains” are misleading on a provider-managed `workers.dev` hostname. All 77 shown hostnames return Cloudflare 404s and are not 77 LDW-owned subdomains.
+- The “Third-Party Domains” section calls two scanner-initiated CDN checks services contacted while crawling, while the application network summary correctly shows zero third-party requests. Distinguish scanner-selected external checks from page-initiated traffic.
+
+### Desired evidence model
+
+The most useful analyst table would be:
+
+| Layer/tool | Target                       | Method | Input/parameter  | Discovery provenance | Outcome      | Evidence/failure reason          |
+| ---------- | ---------------------------- | ------ | ---------------- | -------------------- | ------------ | -------------------------------- |
+| dalfox     | `/search`                    | GET    | `q`              | crawl/reflection     | CONFIRMED    | DOM marker                       |
+| sqlmap     | `/api/accounts`              | GET    | `id`             | OpenAPI              | INCONCLUSIVE | exact exit/baseline/differential |
+| ffuf       | `/api/runtime`               | GET    | hidden parameter | page JS              | INCONCLUSIVE | connection or parse detail       |
+| jwt_tool   | `/api/session-info` response | GET    | JSON/DOM token   | page JS              | NOT INGESTED | exclusion reason                 |
+
+## Prioritized improvements
+
+1. Make sqlmap content-difference confirmation reliable and auditable for SQLite/D1-like serverless behavior.
+2. Preserve the successful page-JavaScript endpoint discovery and make it visible as a positive result.
+3. Feed discovered JSON/DOM JWTs and body/form inputs into the appropriate tools.
+4. Expose route/method/input-level positive, negative, and inconclusive evidence.
+5. Improve hidden-parameter orchestration diagnostics and response-differential reporting.
+6. Compare accepted HTTP methods and access-control behavior route by route.
+7. Show authenticated-only coverage and public/auth differentials.
+8. Separate exploit, verified configuration, heuristic, passive observation, clean test, and inconclusive test.
+9. Collapse duplicates and explain every top-level count/score.
+10. Qualify provider-managed DNS/subdomain context and scanner-initiated third parties.
 
 ## Overall feedback
 
-The proof was worthwhile. We would not characterize Decloak as "just another header scanner" after this test. The active engine, agent reasoning, API/security-surface work, and dalfox confirmation show real potential.
+The proof was worthwhile. Decloak is not merely a header scanner: the active engine, agent reasoning, JavaScript/API discovery, and dalfox confirmation showed real potential and enough distinct value for LDW to purchase Tier 3 as a complementary control.
 
-At the same time, the proof showed why we would still keep deterministic tests, dependency/secret scanning, browser checks, static/framework reasoning, and human review. Decloak currently looks complementary rather than comprehensive.
+The same proof also shows why LDW will continue deterministic tests, dependency/secret scanning, browser/site checks, framework-aware source review, and human validation. The highest-value next step is not more findings; it is reliable candidate handoff between discovery and tools, route/input-level evidence, and clearer consequence/count semantics.
 
-We appreciate the vendor-operated proof and the willingness to receive detailed technical feedback. The most valuable next improvements for LDW-style serverless web workloads are the Hono/D1 SQLi, JavaScript-derived API discovery, hidden parameter/JWT ingestion, body-input exploitation, and report evidence/triage improvements above.
+We appreciate Stephen's generosity, the time spent answering our questions, and the vendor-operated proof. We are sharing this detailed reconciliation in the spirit of reciprocity and welcome corrections based on Decloak's internal telemetry. No rescan is requested.
